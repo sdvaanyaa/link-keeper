@@ -3,22 +3,31 @@ package main
 import (
 	"flag"
 	"log"
-	"saveBot/clients/telegram"
+	tgClient "saveBot/clients/telegram"
+	"saveBot/consumer/event_consumer"
+	"saveBot/events/telegram"
+	"saveBot/storage/files"
 )
 
 const (
-	tgBotHost = "api.telegram.org"
+	tgBotHost   = "api.telegram.org"
+	storagePath = "storage"
+	batchSize   = 100
 )
 
 func main() {
-	tgClient := telegram.New(tgBotHost, mustToken())
+	eventsProcessor := telegram.New(
+		tgClient.New(tgBotHost, mustToken()),
+		files.New(storagePath),
+	)
 
-	// fetcher = fetcher.New(tgClient)
+	log.Print("service started")
 
-	// processor = processor.New(tgClient)
+	consumer := event_consumer.New(eventsProcessor, eventsProcessor, batchSize)
 
-	// consumer.Start()
-	// получает события (fetcher) и обрабатывает их (processor)
+	if err := consumer.Start(); err != nil {
+		log.Fatal("service is stopped")
+	}
 }
 
 func mustToken() string {
