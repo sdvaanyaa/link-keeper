@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"saveBot/clients/telegram"
 	"saveBot/events"
@@ -81,16 +82,16 @@ func fetchText(upd telegram.Update) string {
 	return upd.Message.Text
 }
 
-func (p *Processor) Process(event events.Event) error {
+func (p *Processor) Process(ctx context.Context, event events.Event) error {
 	switch event.Type {
 	case events.Message:
-		return p.ProcessMessage(event)
+		return p.ProcessMessage(ctx, event)
 	default:
 		return errwrap.Wrap("can't process message", ErrUnknownEventType)
 	}
 }
 
-func (p *Processor) ProcessMessage(event events.Event) (err error) {
+func (p *Processor) ProcessMessage(ctx context.Context, event events.Event) (err error) {
 	defer func() { err = errwrap.WrapIfErr("can't process message", err) }()
 
 	metaData, err := meta(event)
@@ -98,7 +99,7 @@ func (p *Processor) ProcessMessage(event events.Event) (err error) {
 		return err
 	}
 
-	if err := p.doCmd(event.Text, metaData.ChatID, metaData.Username); err != nil {
+	if err := p.doCmd(ctx, event.Text, metaData.ChatID, metaData.Username); err != nil {
 		return err
 	}
 	return nil

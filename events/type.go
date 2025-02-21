@@ -1,11 +1,13 @@
 package events
 
+import "context"
+
 type Fetcher interface {
 	Fetch(limit int) ([]Event, error)
 }
 
 type Processor interface {
-	Process(event Event) error
+	Process(ctx context.Context, event Event) error
 }
 
 type Type int

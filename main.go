@@ -1,31 +1,43 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	tgClient "saveBot/clients/telegram"
 	"saveBot/consumer/event_consumer"
 	"saveBot/events/telegram"
-	"saveBot/storage/files"
+	"saveBot/storage/sqlite"
 )
 
 const (
-	tgBotHost   = "api.telegram.org"
-	storagePath = "storage"
-	batchSize   = 100
+	tgBotHost = "api.telegram.org"
+	// storagePath = "files_storage"
+	sqliteStoragePath = "data/sqlite/storage.db"
+	batchSize         = 100
 )
 
 func main() {
+	// s := files.New(storagePath)
+	s, err := sqlite.New(sqliteStoragePath)
+	if err != nil {
+		log.Fatalf("can't connect to storage: %s", err)
+	}
+
+	if err := s.Init(context.TODO()); err != nil {
+		log.Fatalf("can't init storage: %s", err)
+	}
+
 	eventsProcessor := telegram.New(
 		tgClient.New(tgBotHost, mustToken()),
-		files.New(storagePath),
+		s,
 	)
 
 	log.Print("service started")
 
 	consumer := event_consumer.New(eventsProcessor, eventsProcessor, batchSize)
 
-	if err := consumer.Start(); err != nil {
+	if err := consumer.Start(context.TODO()); err != nil {
 		log.Fatal("service is stopped")
 	}
 }
