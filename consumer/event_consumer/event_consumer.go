@@ -21,9 +21,9 @@ func New(fetcher events.Fetcher, processor events.Processor, batchSize int) Cons
 	}
 }
 
-func (c Consumer) Start(ctx context.Context) error {
+func (c Consumer) Start() error {
 	for {
-		gotEvents, err := c.fetcher.Fetch(c.batchSize)
+		gotEvents, err := c.fetcher.Fetch(context.Background(), c.batchSize)
 		if err != nil {
 			log.Printf("error fetching events: %v", err)
 
@@ -36,7 +36,7 @@ func (c Consumer) Start(ctx context.Context) error {
 			continue
 		}
 
-		if err := c.handleEvents(ctx, gotEvents); err != nil {
+		if err := c.handleEvents(context.Background(), gotEvents); err != nil {
 			log.Printf("error handling events: %s", err)
 		}
 

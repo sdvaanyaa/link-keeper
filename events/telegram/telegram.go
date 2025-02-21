@@ -32,8 +32,8 @@ func New(client *telegram.Client, storage storage.Storage) *Processor {
 	}
 }
 
-func (p *Processor) Fetch(limit int) ([]events.Event, error) {
-	updates, err := p.tg.Updates(p.offset, limit)
+func (p *Processor) Fetch(ctx context.Context, limit int) ([]events.Event, error) {
+	updates, err := p.tg.Updates(ctx, p.offset, limit)
 	if err != nil {
 		return nil, errwrap.Wrap("can't get events", err)
 	}
@@ -50,6 +50,15 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 
 	p.offset = updates[len(updates)-1].ID + 1
 	return res, nil
+}
+
+func (p *Processor) Process(ctx context.Context, event events.Event) error {
+	switch event.Type {
+	case events.Message:
+		return p.processMessage(ctx, event)
+	default:
+		return errwrap.Wrap("can't process message", ErrUnknownEventType)
+	}
 }
 
 func event(upd telegram.Update) events.Event {
@@ -82,16 +91,7 @@ func fetchText(upd telegram.Update) string {
 	return upd.Message.Text
 }
 
-func (p *Processor) Process(ctx context.Context, event events.Event) error {
-	switch event.Type {
-	case events.Message:
-		return p.ProcessMessage(ctx, event)
-	default:
-		return errwrap.Wrap("can't process message", ErrUnknownEventType)
-	}
-}
-
-func (p *Processor) ProcessMessage(ctx context.Context, event events.Event) (err error) {
+func (p *Processor) processMessage(ctx context.Context, event events.Event) (err error) {
 	defer func() { err = errwrap.WrapIfErr("can't process message", err) }()
 
 	metaData, err := meta(event)

@@ -1,6 +1,7 @@
 package files
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -21,7 +22,7 @@ func New(basePath string) Storage {
 	return Storage{basePath: basePath}
 }
 
-func (s Storage) Save(page *storage.Page) (err error) {
+func (s Storage) Save(_ context.Context, page *storage.Page) (err error) {
 	defer func() { err = errwrap.WrapIfErr("can't save page", err) }()
 
 	filePath := filepath.Join(s.basePath, page.UserName)
@@ -49,7 +50,7 @@ func (s Storage) Save(page *storage.Page) (err error) {
 	return nil
 }
 
-func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
+func (s Storage) PickRandom(_ context.Context, userName string) (page *storage.Page, err error) {
 	defer func() { err = errwrap.WrapIfErr("can't pick random page", err) }()
 
 	path := filepath.Join(s.basePath, userName)
@@ -71,7 +72,7 @@ func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
 	return s.decodePage(filepath.Join(path, file.Name()))
 }
 
-func (s Storage) Remove(page *storage.Page) error {
+func (s Storage) Remove(_ context.Context, page *storage.Page) error {
 	fName, err := fileName(page)
 	if err != nil {
 		return errwrap.Wrap("can't remove page", err)
@@ -84,7 +85,7 @@ func (s Storage) Remove(page *storage.Page) error {
 	return nil
 }
 
-func (s Storage) IsExists(page *storage.Page) (bool, error) {
+func (s Storage) IsExists(_ context.Context, page *storage.Page) (bool, error) {
 	fName, err := fileName(page)
 	if err != nil {
 		return false, errwrap.Wrap("can't check if file exist", err)

@@ -29,11 +29,11 @@ func (p *Processor) doCmd(ctx context.Context, text string, chatID int, username
 	case RndCmd:
 		return p.sendRandom(ctx, chatID, username)
 	case HelpCmd:
-		return p.sendHelp(chatID)
+		return p.sendHelp(ctx, chatID)
 	case StartCmd:
-		return p.sendHello(chatID)
+		return p.sendHello(ctx, chatID)
 	default:
-		return p.tg.SendMessage(chatID, msgUnknownCommand)
+		return p.tg.SendMessage(ctx, chatID, msgUnknownCommand)
 	}
 
 }
@@ -51,14 +51,14 @@ func (p *Processor) savePage(ctx context.Context, pageURL string, chatID int, us
 		return err
 	}
 	if isExists {
-		return p.tg.SendMessage(chatID, msgAlreadyExists)
+		return p.tg.SendMessage(ctx, chatID, msgAlreadyExists)
 	}
 
 	if err := p.storage.Save(ctx, page); err != nil {
 		return err
 	}
 
-	if err := p.tg.SendMessage(chatID, msgSaved); err != nil {
+	if err := p.tg.SendMessage(ctx, chatID, msgSaved); err != nil {
 		return err
 	}
 
@@ -74,21 +74,21 @@ func (p *Processor) sendRandom(ctx context.Context, chatID int, username string)
 	}
 
 	if errors.Is(err, storage.ErrNoSavedPages) {
-		return p.tg.SendMessage(chatID, msgNoSavedPages)
+		return p.tg.SendMessage(ctx, chatID, msgNoSavedPages)
 	}
 
-	if err := p.tg.SendMessage(chatID, page.URL); err != nil {
+	if err := p.tg.SendMessage(ctx, chatID, page.URL); err != nil {
 		return err
 	}
 	return p.storage.Remove(ctx, page)
 }
 
-func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHelp)
+func (p *Processor) sendHelp(ctx context.Context, chatID int) error {
+	return p.tg.SendMessage(ctx, chatID, msgHelp)
 }
 
-func (p *Processor) sendHello(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHello)
+func (p *Processor) sendHello(ctx context.Context, chatID int) error {
+	return p.tg.SendMessage(ctx, chatID, msgHello)
 }
 
 func isAddCmd(text string) bool {
